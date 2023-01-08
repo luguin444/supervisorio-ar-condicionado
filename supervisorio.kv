@@ -1,4 +1,126 @@
 #:kivy 1.11.1
 
 <Supervisorio>:
-    orientation: 'horizontal'
+    orientation: 'vertical'
+    canvas:
+        Color:
+            rgb: 0.8,0.8,0.8
+        Rectangle:
+            size: self.size
+    FloatLayout:
+        Image:
+            source: 'imgs/interface.png'
+            pos_hint: {'top':1, 'right':1}
+        Label:
+            id: temp_enrolamento_r
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': 0.0}
+            color: 0,0,0,1
+        Label:
+            id: temp_enrolamento_s
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': -0.05}
+            color: 0,0,0,1
+        Label:
+            id: temp_enrolamento_t
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': -0.1}
+            color: 0,0,0,1
+        Label:
+            id: temp_carcaca
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': -0.15}
+            color: 0,0,0,1
+        Label:
+            id: freq_motor_rpm
+            text: '-.- Hz'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': -0.2}
+            color: 0,0,0,1
+        Label:
+            id: torque_vent_radial
+            text: '-.- N.m'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.1,'y': -0.25}
+            color: 0,0,0,1
+        Label:
+            id: torque_vent_rpm
+            text: '-.- N.m'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': 0.0}
+            color: 0,0,0,1
+        Label:
+            id: vel_ar
+            text: '-.- m/s'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': -0.05}
+            color: 0,0,0,1
+        Label:
+            id: temp_ar
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': -0.1}
+            color: 0,0,0,1
+        Label:
+            id: temp_tub_azul
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': -0.15}
+            color: 0,0,0,1
+        Label:
+            id: temp_tub_vermelho
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': -0.2}
+            color: 0,0,0,1
+        Label:
+            id: o_que_falta
+            text: '-.- C'
+            font_size: 15
+            bold: True
+            halign: 'center'
+            pos_hint: {'x': 0.2,'y': -0.25}
+            color: 0,0,0,1
+
+        Switch:
+            id: motor
+            pos_hint: {'x': -0.4, 'y': 0.36}
+        
+    
+    BoxLayout:
+        size_hint: 1,0.2
+        orientation: 'horizontal'
+        canvas:
+            Color:
+                rgb: 0.3,0.3,0.3
+            Rectangle:
+                size: self.size
+        Label:
+            id: labe
+            text: 'Menu'
