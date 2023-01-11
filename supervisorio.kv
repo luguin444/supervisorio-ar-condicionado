@@ -109,8 +109,9 @@
             color: 0,0,0,1
 
         Switch:
-            id: motor
+            id: supervisorio
             pos_hint: {'x': -0.4, 'y': 0.36}
+            on_active: root.turn_supervisorio_on()
         
     
     BoxLayout:

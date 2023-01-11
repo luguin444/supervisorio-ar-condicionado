@@ -16,7 +16,7 @@ relation_from_modbus_addresses_with_database_colunms = {
 Para rodar o projeto
 
 Bibliotecas necessárias:
-pip install kivy pyModbusTCP sqlalchemy
+pip install kivy pyModbusTCP sqlalchemy pymodbus
 
 Rodar no terminal:
 python main.py
