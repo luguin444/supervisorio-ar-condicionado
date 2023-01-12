@@ -20,5 +20,3 @@ pip install kivy pyModbusTCP sqlalchemy
 
 Rodar no terminal:
 python main.py
-
-teste
