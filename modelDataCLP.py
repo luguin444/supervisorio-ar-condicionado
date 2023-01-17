@@ -1,13 +1,9 @@
 from db import Base
-from db import engine
 from sqlalchemy import Column, Integer, DateTime, REAL
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
 
 
 class DadoCLP(Base):
-    _tablename_ = 'dadosclp'
+    __tablename__ = 'dados_clp'
 
     id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)  # /10
@@ -23,5 +19,3 @@ class DadoCLP(Base):
     temperatura_ar = Column(REAL)  # float
     temperatura_tubo_azul = Column(REAL)  # /10
     temperatura_tubo_vermelho = Column(REAL)  # /10
-
-    Base.metadata.create_all(engine)

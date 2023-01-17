@@ -4,14 +4,12 @@ from pyModbusTCP.client import ModbusClient
 from threading import Thread
 from time import sleep
 from datetime import datetime
-from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian
-# from modelDataCLP import DadoCLP
-# from db import Session
+from pymodbus.payload import BinaryPayloadDecoder, Endian
+from modelDataCLP import DadoCLP
+from db import Base, Session, engine
 
 
 class SupervisorioHandler(BoxLayout):
-    pass
-
     _is_supervisorio_on = False
 
     def __init__(self, server_ip, modbus_port, scan_time=1):
@@ -20,6 +18,8 @@ class SupervisorioHandler(BoxLayout):
         self._modbus_client = ModbusClient(host=server_ip, port=modbus_port)
         self._scan_time = scan_time
         self._real_time_data = {}
+        self._session = Session()
+        Base.metadata.create_all(engine)
 
     def turn_supervisorio_on(self):
         self._is_supervisorio_on = self.ids.supervisorio.active
@@ -53,38 +53,31 @@ class SupervisorioHandler(BoxLayout):
 
     def read_data_from_CLP(self):
         self._real_time_data['timestamp'] = datetime.now()
-        self._real_time_data['temperatura_enrolamento_r'] = round(self.lerFloat(
-            700) * 0.1, 2)
-        self._real_time_data['temperatura_enrolamento_s'] = round(self.lerFloat(
-            702) * 0.1, 2)
-        self._real_time_data['temperatura_enrolamento_t'] = round(self.lerFloat(
-            704) * 0.1, 2)
-        self._real_time_data['temperatura_carcaca'] = round(self.lerFloat(
-            706) * 0.1, 2)
-        self._real_time_data['frequencia_motor_rpm'] = round(self.lerFloat(
-            884), 2)
-        self._real_time_data['torque_ventilador_radial'] = round(self.lerFloat(
-            1422), 2)
-        self._real_time_data['torque_ventilador_axial'] = round(self.lerFloat(
-            1424), 2)
-        self._real_time_data['vazao_ar'] = round(self.lerFloat(
-            714), 2)
-        self._real_time_data['velocidade_ar'] = round(self.lerFloat(
-            712), 2)
-        self._real_time_data['temperatura_ar'] = round(self.lerFloat(
-            710), 2)
-        self._real_time_data['temperatura_tubo_azul'] = round(self.lerFloat(
-            1220) * 0.1, 2)
-        self._real_time_data['temperatura_tubo_vermelho'] = round(self.lerFloat(
-            1218) * 0.1, 2)
+        self._real_time_data['temperatura_enrolamento_r'] = self.lerFloat(
+            700, 0.1)
+        self._real_time_data['temperatura_enrolamento_s'] = self.lerFloat(
+            702, 0.1)
+        self._real_time_data['temperatura_enrolamento_t'] = self.lerFloat(
+            704, 0.1)
+        self._real_time_data['temperatura_carcaca'] = self.lerFloat(706, 0.1)
+        self._real_time_data['frequencia_motor_rpm'] = self.lerFloat(884)
+        self._real_time_data['torque_ventilador_radial'] = self.lerFloat(1422)
+        self._real_time_data['torque_ventilador_axial'] = self.lerFloat(1424)
+        self._real_time_data['vazao_ar'] = self.lerFloat(714)
+        self._real_time_data['velocidade_ar'] = self.lerFloat(712)
+        self._real_time_data['temperatura_ar'] = self.lerFloat(710)
+        self._real_time_data['temperatura_tubo_azul'] = self.lerFloat(
+            1220, 0.1)
+        self._real_time_data['temperatura_tubo_vermelho'] = self.lerFloat(
+            1218, 0.1)
 
-    def lerFloat(self, addr):
+    def lerFloat(self, addr, multiplier=1):
         num_float = self._modbus_client.read_holding_registers(addr, 2)
 
         decorder = BinaryPayloadDecoder.fromRegisters(
             num_float, Endian.Big, Endian.Little)
         decoded_float = decorder.decode_32bit_float()
-        return decoded_float
+        return round(decoded_float * multiplier, 2)
 
     def update_GUI(self):
         self.ids.temp_enrolamento_r.text = str(
@@ -114,7 +107,27 @@ class SupervisorioHandler(BoxLayout):
         #     self._real_time_data['vazao_ar'])
 
     def insert_data_to_database(self):
-        pass
-    #         # registro = DadoCLP(**self._real_time_data)
-    #         # Session.add(registro)
-    #         # Session.commit()
+        registro = DadoCLP(**self._real_time_data)
+
+        self._session.add(registro)
+        self._session.commit()
+
+    def get_data_from_database(self):
+        init = input(
+            "Digite o horário inicial para a busca (DD/MM/AAAA HH:MM:SS):")
+        final = input(
+            "Digite o horário final para a busca (DD/MM/AAAA HH:MM:SS):")
+        init = datetime.strptime(init, '%d/%m/%Y %H:%M:%S')
+        final = datetime.strptime(final, '%d/%m/%Y %H:%M:%S')
+        self._lock.acquire()
+        results = self._session.query(DadoCLP).filter(
+            DadoCLP.timestamp.between(init, final)).all()
+        self._lock.release()
+        results = self._session.query(DadoCLP).filter(
+            DadoCLP.timestamp.between(init, final)).all()
+
+# inteiro para lista de binario
+# lista16bits = [int(i) for i in list('{0:016b}'.format(valorLidoHoldingRegister))]
+
+# lista de binario para inteiro
+# valor16BITs = int(''.join(str(i) for i in lista), 2)
