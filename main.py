@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.core.window import Window
 from kivy.lang import Builder
 from pyModbusTCP.client import ModbusClient
+from pyModbusTCP.utils import encode_ieee, long_list_to_word
 from threading import Thread
 from time import sleep
 from datetime import datetime
@@ -18,10 +19,9 @@ class Principal(Screen):
         super().__init__(**kw)
         server_ip = '192.168.0.12'
         modbus_port = 502
-        scan_time = 1
 
         self._modbus_client = ModbusClient(host=server_ip, port=modbus_port)
-        self._scan_time = scan_time
+        self._scan_time = 1
         self._real_time_data = {}
         self._session = Session()
         Base.metadata.create_all(engine)
@@ -51,7 +51,7 @@ class Principal(Screen):
             while self._is_supervisorio_on:
                 self.read_data_from_CLP()
                 # self.update_GUI()
-                self.insert_data_to_database()
+                # self.insert_data_to_database()
                 sleep(self._scan_time/1000)
         except Exception as e:
             print("Erro: ", e.args)
@@ -96,32 +96,32 @@ class Principal(Screen):
     def comutarCompressor(self):
         pass
 
-    # def update_GUI(self):
-    #     self.ids.temp_enrolamento_r.text = str(
-    #         self._real_time_data['temperatura_enrolamento_r'])
-    #     self.ids.temp_enrolamento_s.text = str(
-    #         self._real_time_data['temperatura_enrolamento_s'])
-    #     self.ids.temp_enrolamento_t.text = str(
-    #         self._real_time_data['temperatura_enrolamento_t'])
-    #     self.ids.temp_carcaca.text = str(
-    #         self._real_time_data['temperatura_carcaca'])
-    #     self.ids.freq_motor_rpm.text = str(
-    #         self._real_time_data['frequencia_motor_rpm'])
-    #     self.ids.torque_vent_radial.text = str(
-    #         self._real_time_data['torque_ventilador_radial'])
-    #     self.ids.vel_ar.text = str(
-    #         self._real_time_data['velocidade_ar'])
-    #     self.ids.temp_ar.text = str(
-    #         self._real_time_data['temperatura_ar'])
-    #     self.ids.temp_tub_azul.text = str(
-    #         self._real_time_data['temperatura_tubo_azul'])
-    #     self.ids.temp_tub_vermelho.text = str(
-    #         self._real_time_data['temperatura_tubo_vermelho'])
+    def update_GUI(self):
+        self.ids.temp_enrolamento_r.text = str(
+            self._real_time_data['temperatura_enrolamento_r'])
+        self.ids.temp_enrolamento_s.text = str(
+            self._real_time_data['temperatura_enrolamento_s'])
+        self.ids.temp_enrolamento_t.text = str(
+            self._real_time_data['temperatura_enrolamento_t'])
+        self.ids.temp_carcaca.text = str(
+            self._real_time_data['temperatura_carcaca'])
+        self.ids.freq_motor_rpm.text = str(
+            self._real_time_data['frequencia_motor_rpm'])
+        self.ids.torque_vent_radial.text = str(
+            self._real_time_data['torque_ventilador_radial'])
+        self.ids.vel_ar.text = str(
+            self._real_time_data['velocidade_ar'])
+        self.ids.temp_ar.text = str(
+            self._real_time_data['temperatura_ar'])
+        self.ids.temp_tub_azul.text = str(
+            self._real_time_data['temperatura_tubo_azul'])
+        self.ids.temp_tub_vermelho.text = str(
+            self._real_time_data['temperatura_tubo_vermelho'])
 
-    #     self.ids.freq_motor_rpm.text = str(
-    #         self._real_time_data['torque_ventilador_axial'])
-    #     self.ids.freq_motor_rpm.text = str(
-    #         self._real_time_data['vazao_ar'])
+        self.ids.freq_motor_rpm.text = str(
+            self._real_time_data['torque_ventilador_axial'])
+        self.ids.freq_motor_rpm.text = str(
+            self._real_time_data['vazao_ar'])
 
     def insert_data_to_database(self):
         registro = DadoCLP(**self._real_time_data)
@@ -131,15 +131,60 @@ class Principal(Screen):
 
 
 class Configuracao(Screen):
+    _config = {}
+
     def salvarConfiguracao(self):
-        # setar os dados no CLP
-        # garantir consistencia
-        # função de bits
-        pass
+        obteve_sucesso = self.pegar_e_validar_dados_tela()
+
+        if not obteve_sucesso:
+            print("entrei no nao sucesso")
+            return
+
+        print("Config", self._config)
+
+        self.escrever_config()
+        self.mudar_para_tela_principal()
+
+    def pegar_e_validar_dados_tela(self):
+        try:
+            self._config['compressor_scroll_setado'] = self.ids.scroll.active
+            self._config['compressor_hermetico_setado'] = self.ids.hermetico.active
+
+            self._config['partida_direta_setada'] = self.ids.direta.active
+            self._config['partida_soft_setada'] = self.ids.soft.active
+            self._config['partida_inversor_setada'] = self.ids.inversor.active
+
+            self._config['tempo_aceleracao'] = float(
+                self.ids.temp_aceleracao.text)
+            self._config['tempo_desaceleracao'] = float(
+                self.ids.temp_desaceleracao.text)
+            self._config['velocidade_inversor'] = float(
+                self.ids.velocidade_inversor.text)
+
+            if self._config['velocidade_inversor'] < 0 or self._config['velocidade_inversor'] > 60:
+                # aparecer label de erro com escrito "Velocidade inversor deve ser um numero real entre 0 e 60"
+                return False
+
+            return True
+        except Exception as e:
+            # aparecer label de erro com escrito e.args
+            return False
+
+    def escrever_config(self):
+        print("to escrevendo")
+
+    def escreveFloat(self, addr, valor):
+        valor_tratado = encode_ieee(valor)
+
+        return self._cliente.write_multiple_registers(addr, long_list_to_word([valor_tratado]))
+
+    def mudar_tela_principal(self):
+        print("to mudando_tela_principal")
 
 
 class Graficos(Screen):
     pass
+
 
 class Dados(Screen):
     pass

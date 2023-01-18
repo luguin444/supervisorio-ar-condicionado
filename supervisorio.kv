@@ -235,10 +235,10 @@ WindowManager:
                     size_hint: 1,1
                 CheckBox:
                     size: 5,5
-                    id: inverssor
+                    id: inversor
                     group: 'partida'
                 Label:
-                    text: 'Inverssor'
+                    text: 'Inversor'
                 Label:
                     size_hint: 1,1
 
@@ -290,10 +290,9 @@ WindowManager:
                     Label:
                         size_hint: 0.5,1
                     Label:
-                        text: 'Velocidade de Aceleração:'
-
+                        text: 'Tempo de Aceleração:'
                     TextInput:
-                        id: velacl
+                        id: temp_aceleracao
                         size_hint: 0.2,0.8
                     Label:
                         size_hint: 0.7,1
@@ -302,10 +301,10 @@ WindowManager:
                     Label:
                         size_hint: 0.5,1
                     Label:
-                        text: 'Velocidade de Desaceleração:'
+                        text: 'Tempo de Desaceleração:'
                         font_size: 13
                     TextInput:
-                        id: veldesacl
+                        id: temp_desaceleracao
                         size_hint: 0.2,0.8
                     Label:
                         size_hint: 0.7,1
@@ -314,9 +313,9 @@ WindowManager:
                     Label:
                         size_hint: 0.5,1
                     Label:
-                        text: 'Frequência de Partida:'
+                        text: 'Velocidade Inversor ( 0 a 60 ):'
                     TextInput:
-                        id: freq
+                        id: velocidade_inversor
                         size_hint: 0.2,0.8
                     Label:
                         size_hint: 0.7,1
@@ -324,6 +323,7 @@ WindowManager:
         text: 'Aplicar Mudanças'
         size_hint: 0.2,0.1
         pos: 485, 5
+        on_release: root.salvarConfiguracao()
 
 <Graficos>:
     name: 'grafico'
