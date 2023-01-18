@@ -141,6 +141,9 @@ class Configuracao(Screen):
 class Graficos(Screen):
     pass
 
+class Dados(Screen):
+    pass
+
 
 class GraficosTR(Screen):
     pass
