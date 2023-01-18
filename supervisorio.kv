@@ -1,127 +1,461 @@
 #:kivy 1.11.1
+WindowManager:
+    Principal:
+    Configuracao:
+    Graficos:
+    Dados:
+    GraficosTR:
 
-<SupervisorioHandler>:
-    orientation: 'vertical'
+<Principal>:
+    name: 'principal'
     canvas:
         Color:
             rgb: 0.8,0.8,0.8
         Rectangle:
             size: self.size
-    FloatLayout:
-        Image:
-            source: 'imgs/interface.png'
-            pos_hint: {'top':1, 'right':1}
-        Label:
-            id: temp_enrolamento_r
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': 0.0}
-            color: 0,0,0,1
-        Label:
-            id: temp_enrolamento_s
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': -0.05}
-            color: 0,0,0,1
-        Label:
-            id: temp_enrolamento_t
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': -0.1}
-            color: 0,0,0,1
-        Label:
-            id: temp_carcaca
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': -0.15}
-            color: 0,0,0,1
-        Label:
-            id: freq_motor_rpm
-            text: '-.- Hz'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': -0.2}
-            color: 0,0,0,1
-        Label:
-            id: torque_vent_radial
-            text: '-.- N.m'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.1,'y': -0.25}
-            color: 0,0,0,1
-        Label:
-            id: torque_vent_rpm
-            text: '-.- N.m'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': 0.0}
-            color: 0,0,0,1
-        Label:
-            id: vel_ar
-            text: '-.- m/s'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': -0.05}
-            color: 0,0,0,1
-        Label:
-            id: temp_ar
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': -0.1}
-            color: 0,0,0,1
-        Label:
-            id: temp_tub_azul
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': -0.15}
-            color: 0,0,0,1
-        Label:
-            id: temp_tub_vermelho
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': -0.2}
-            color: 0,0,0,1
-        Label:
-            id: o_que_falta
-            text: '-.- C'
-            font_size: 15
-            bold: True
-            halign: 'center'
-            pos_hint: {'x': 0.2,'y': -0.25}
-            color: 0,0,0,1
+    ActionBar:
+        size: root.width, 50
+        pos: 0,550
+        background_color: 0,0,0,0.5
+        ActionView:
+            
+            id: av
+            ActionPrevious:
+                id: onoff
+                title: "Pagina Principal"
+                with_previous: False
+                app_icon: 'imgs/desconectado.png'
+                on_release: root.turn_supervisorio_on()
+            
+            ActionButton:
+                id: principal
+                text: 'Principal'
+                on_release: app.root.current = 'principal'
+            
+            ActionButton:
+                id: config
+                text: 'Configuração'
+                on_release: app.root.current = 'config'
+            
+            ActionButton:
+                id: graf
+                text: 'Gráfico'
+                on_release: app.root.current = 'grafico'
+            
+            ActionButton:
+                id: dd
+                text: 'Dados'
+                on_release: app.root.current = 'dados'
 
-        Switch:
-            id: supervisorio
-            pos_hint: {'x': -0.4, 'y': 0.36}
-            on_active: root.turn_supervisorio_on()
-        
-    
-    BoxLayout:
-        size_hint: 1,0.2
-        orientation: 'horizontal'
+            ActionButton:
+                id: graftr
+                text: 'Tempo Real'
+                on_release: app.root.current = 'graficotr'
+    FloatLayout:
         canvas:
             Color:
-                rgb: 0.3,0.3,0.3
+                id: scroll
+                rgba: 0.5,0.5,0.5,1
             Rectangle:
-                size: self.size
-        Label:
-            id: labe
-            text: 'Menu'
+                size: 30,30
+                pos: 117, 130
+            Color:
+                id: hermetico
+                rgba: 0.5,0.5,0.5,1
+            Rectangle:
+                size: 30,30
+                pos: 40, 130
+        Image:
+            source: 'imgs/interface.png'
+            pos_hint: {'x': -0.13, 'y': 0}
+
+        Image:
+            id: motorprincipal
+            source: 'imgs/desligado.png'
+            pos_hint: {'x': -0.43, 'y': 0.23}
+
+        Button:
+            text: ''
+            size_hint: 0.03, 0.03
+            background_color: 0.5,0.5,0.5,1
+            pos: 70, 430
+            on_release: root.ligamotor()
+
+        BoxLayout:
+            orientation: 'vertical'
+            canvas:
+                Color:
+                    rgba: 0,0,0,0.3
+                Rectangle:
+                    size: 295,540
+                    pos: 900,5
+            Label:
+                id: graf1
+                pos_hint: {'x': 0.38}
+                text: 'GraficoTR1'
+
+            Label:
+                id: graf2
+                pos_hint: {'x': 0.38}
+                text: 'GraficoTR2'
+
+<Configuracao>:
+    name: 'config'
+    canvas:
+        Color:
+            rgb: 0.8,0.8,0.8
+        Rectangle:
+            size: self.size
+    ActionBar:
+        size: root.width, 50
+        pos: 0,550
+        background_color: 0,0,0,0.5
+
+        ActionView:
+            id: av
+            ActionPrevious:
+                id: onoff
+                title: "Configurações"
+                with_previous: False
+                app_icon: ''
+            
+            ActionButton:
+                id: principal
+                text: 'Principal'
+                on_release: app.root.current = 'principal'
+            
+            ActionButton:
+                id: config
+                text: 'Configuração'
+                on_release: app.root.current = 'config'
+
+            ActionButton:
+                id: graf
+                text: 'Gráfico'
+                on_release: app.root.current = 'grafico'
+            
+            ActionButton:
+                id: dd
+                text: 'Dados'
+                on_release: app.root.current = 'dados'
+
+            ActionButton:
+                id: graftr
+                text: 'Tempo Real'
+                on_release: app.root.current = 'graficotr'
+
+    GridLayout:
+        cols: 2
+        canvas:
+            Color:
+                rgba: 0,0,0,0.5
+            Rectangle:
+                size: 300, 250
+                pos: 160,5
+            Rectangle:
+                size: 300, 250
+                pos: 750,5
+            Rectangle:
+                size: 300, 250
+                pos: 160,295
+            Rectangle:
+                size: 300, 250
+                pos: 750,295
+        BoxLayout:
+            orientation:'vertical'
+            Label:
+                size_hint: 1,0.5
+            Label:
+                text: 'Configuração dos Motores'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: radial
+                    group: 'motor'
+                Label:
+                    text: 'Radial'
+                Label:
+                    size_hint: 1,1
+            Label:
+                size_hint: 1,0.3
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: axial
+                    group: 'motor'
+                Label:
+                    text: 'Axial'
+                Label:
+                    size_hint: 1,1
+
+        BoxLayout:
+            orientation:'vertical'
+            Label:
+                size_hint: 1,0.9
+            Label:
+                size_hint: 1, 0.1
+                text: 'Configuração da Partida'
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: direta
+                    group: 'partida'
+                Label:
+                    text: 'Direta'
+                Label:
+                    size_hint: 1,1
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: soft
+                    group: 'partida'
+                Label:
+                    text: 'Soft'
+                Label:
+                    size_hint: 1,1
+
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: inverssor
+                    group: 'partida'
+                Label:
+                    text: 'Inverssor'
+                Label:
+                    size_hint: 1,1
+
+        BoxLayout:
+            orientation:'vertical'
+            Label:
+                size_hint: 1,0.2
+            Label:
+                text: 'Configuração dos Compressores'
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: hermetico
+                    group: 'compressor'
+                Label:
+                    text: 'Hermético'
+                Label:
+                    size_hint: 1,1
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                CheckBox:
+                    size: 5,5
+                    id: scroll
+                    group: 'compressor'
+                Label:
+                    text: 'Scroll'
+                Label:
+                    size_hint: 1,1
+        
+        BoxLayout:
+            orientation:'vertical'
+            Label:
+                size_hint: 1, 0.2
+            Label:
+                size_hint: 1, 0.2
+                text: 'Configurações de Velocidade e Frequência'
+            BoxLayout:
+                orientation: 'vertical'
+                spacing: 20
+                padding: 20
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        size_hint: 0.5,1
+                    Label:
+                        text: 'Velocidade de Aceleração:'
+
+                    TextInput:
+                        id: velacl
+                        size_hint: 0.2,0.8
+                    Label:
+                        size_hint: 0.7,1
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        size_hint: 0.5,1
+                    Label:
+                        text: 'Velocidade de Desaceleração:'
+                        font_size: 13
+                    TextInput:
+                        id: veldesacl
+                        size_hint: 0.2,0.8
+                    Label:
+                        size_hint: 0.7,1
+                BoxLayout:
+                    orientation: 'horizontal'
+                    Label:
+                        size_hint: 0.5,1
+                    Label:
+                        text: 'Frequência de Partida:'
+                    TextInput:
+                        id: freq
+                        size_hint: 0.2,0.8
+                    Label:
+                        size_hint: 0.7,1
+    Button:
+        text: 'Aplicar Mudanças'
+        size_hint: 0.2,0.1
+        pos: 485, 5
+
+<Graficos>:
+    name: 'grafico'
+    canvas:
+        Color:
+            rgb: 0.8,0.8,0.8
+        Rectangle:
+            size: self.size
+    ActionBar:
+        size: root.width, 50
+        pos: 0,550
+        background_color: 0,0,0,0.5
+
+        ActionView:
+            id: av
+            ActionPrevious:
+                id: onoff
+                title: "Gráficos"
+                with_previous: False
+                app_icon: ''
+            
+            ActionButton:
+                id: principal
+                text: 'Principal'
+                on_release: app.root.current = 'principal'
+            
+            ActionButton:
+                id: config
+                text: 'Configuração'
+                on_release: app.root.current = 'config'
+
+            ActionButton:
+                id: graf
+                text: 'Gráfico'
+                on_release: app.root.current = 'grafico'
+            
+            ActionButton:
+                id: dd
+                text: 'Dados'
+                on_release: app.root.current = 'dados'
+
+            ActionButton:
+                id: graftr
+                text: 'Tempo Real'
+                on_release: app.root.current = 'graficotr'
+
+<Dados>:
+    name: 'dados'
+    canvas:
+        Color:
+            rgb: 0.8,0.8,0.8
+        Rectangle:
+            size: self.size
+    ActionBar:
+        size: root.width, 50
+        pos: 0,550
+        background_color: 0,0,0,0.5
+
+        ActionView:
+            id: av
+            ActionPrevious:
+                id: onoff
+                title: "Dados"
+                with_previous: False
+                app_icon: ''
+            
+            ActionButton:
+                id: principal
+                text: 'Principal'
+                on_release: app.root.current = 'principal'
+            
+            ActionButton:
+                id: config
+                text: 'Configuração'
+                on_release: app.root.current = 'config'
+
+            ActionButton:
+                id: graf
+                text: 'Gráfico'
+                on_release: app.root.current = 'grafico'
+            
+            ActionButton:
+                id: dd
+                text: 'Dados'
+                on_release: app.root.current = 'dados'
+
+            ActionButton:
+                id: graftr
+                text: 'Tempo Real'
+                on_release: app.root.current = 'graficotr'
+
+<GraficosTR>:
+    name: 'graficotr'
+    canvas:
+        Color:
+            rgb: 0.8,0.8,0.8
+        Rectangle:
+            size: self.size
+    ActionBar:
+        size: root.width, 50
+        pos: 0,550
+        background_color: 0,0,0,0.5
+
+        ActionView:
+            id: av
+            ActionPrevious:
+                id: onoff
+                title: "Gráficos Tempo Real"
+                with_previous: False
+                app_icon: ''
+            
+            ActionButton:
+                id: principal
+                text: 'Principal'
+                on_release: app.root.current = 'principal'
+            
+            ActionButton:
+                id: config
+                text: 'Configuração'
+                on_release: app.root.current = 'config'
+
+            ActionButton:
+                id: graf
+                text: 'Gráfico'
+                on_release: app.root.current = 'grafico'
+            
+            ActionButton:
+                id: dd
+                text: 'Dados'
+                on_release: app.root.current = 'dados'
+
+            ActionButton:
+                id: graftr
+                text: 'Tempo Real'
+                on_release: app.root.current = 'graficotr'
