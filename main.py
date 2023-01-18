@@ -11,16 +11,16 @@ from modelDataCLP import DadoCLP
 from db import Base, Session, engine
 from kivy.uix.screenmanager import ScreenManager, Screen
 
+modbus_client = ModbusClient(host='192.168.0.12', port=502)
+
 
 class Principal(Screen):
     _is_supervisorio_on = False
+    _is_compressor_on = False
 
     def __init__(self, **kw):
         super().__init__(**kw)
-        server_ip = '192.168.0.12'
-        modbus_port = 502
 
-        self._modbus_client = ModbusClient(host=server_ip, port=modbus_port)
         self._scan_time = 1
         self._real_time_data = {}
         self._session = Session()
@@ -29,10 +29,10 @@ class Principal(Screen):
     def turn_supervisorio_on(self):
         try:
             Window.set_system_cursor("wait")
-            self._modbus_client.open()
+            modbus_client.open()
             Window.set_system_cursor("arrow")
 
-            if self._modbus_client.is_open:
+            if modbus_client.is_open:
                 print("Conexao bem sucedida com o MODBUS")
                 self._is_supervisorio_on = True
 
@@ -76,25 +76,54 @@ class Principal(Screen):
         self._real_time_data['temperatura_tubo_vermelho'] = self.lerFloat(
             1218, 0.1)
 
-    def lerFloat(self, addr, multiplier=1):
-        num_float = self._modbus_client.read_holding_registers(addr, 2)
+    def ligarMotor(self):
+        tipo_partida = self.lerInteiro(1324)
 
-        decorder = BinaryPayloadDecoder.fromRegisters(
-            num_float, Endian.Big, Endian.Little)
-        decoded_float = decorder.decode_32bit_float()
-        return round(decoded_float * multiplier, 2)
+        if tipo_partida == 1:  # soft
+            self.escreverInteiro(1316, 1)  # ligar soft
+        elif tipo_partida == 2:
+            self.escreverInteiro(1312, 1)  # ligar inversor
+        else:
+            self.escreverInteiro(1319, 1)  # ligar direta
 
     def lerTipoCompressor(self):
-        pass
+        valor16bits = self.lerInteiro(1328)
+        lista_de_bits = [int(i) for i in list('{0:016b}'.format(valor16bits))]
 
-    def comutarMotor(self):
-        self._motor_ligado = False
-        # escrevoBobina(!motor_ligado)
-        self._motor_ligado = True
-        pass
+        bit_tipo_compressor = lista_de_bits[1]
+        if bit_tipo_compressor == 0:
+            return 'scroll'
+        else:
+            return 'hermetico'
+
+    def is_compressor_on(self):
+        return self._is_compressor_on
 
     def comutarCompressor(self):
-        pass
+        if self._is_compressor_on:
+            self.desligar_compressor()
+            self._is_compressor_on = False
+        else:
+            self.ligar_compressor()
+            self._is_compressor_on = True
+
+    def desligar_compressor(self):
+        valor16bits = modbus_client.read_holding_register(1329, 1)[0]
+        lista_de_bits = [int(i) for i in list('{0:016b}'.format(valor16bits))]
+
+        lista_de_bits[0] = 0
+
+        valor_a_ser_inserido = int("".join(str(i) for i in lista_de_bits), 2)
+        modbus_client.write_single_register(1329, valor_a_ser_inserido)
+
+    def ligar_compressor(self):
+        valor16bits = modbus_client.read_holding_register(1328, 1)[0]
+        lista_de_bits = [int(i) for i in list('{0:016b}'.format(valor16bits))]
+
+        lista_de_bits[4] = 1
+
+        valor_a_ser_inserido = int("".join(str(i) for i in lista_de_bits), 2)
+        modbus_client.write_single_register(1328, valor_a_ser_inserido)
 
     def update_GUI(self):
         self.ids.temp_enrolamento_r.text = str(
@@ -129,9 +158,25 @@ class Principal(Screen):
         self._session.add(registro)
         self._session.commit()
 
+    def lerFloat(self, addr, multiplier=1):
+        num_float = modbus_client.read_holding_registers(addr, 2)
+
+        decorder = BinaryPayloadDecoder.fromRegisters(
+            num_float, Endian.Big, Endian.Little)
+        decoded_float = decorder.decode_32bit_float()
+        return round(decoded_float * multiplier, 2)
+
+    def lerInteiro(self, addr):
+        return modbus_client.read_holding_registers(addr, 1)[0]
+
+    def escreverInteiro(self, addr, valor):
+        modbus_client.write_single_register(addr, valor)
+
 
 class Configuracao(Screen):
     _config = {}
+
+    # TODO: Deixar as configs pre setadas com oq ta escrito no CLP. Init n funciona. Precisaria ter a mesma função em todas as telas?
 
     def salvarConfiguracao(self):
         obteve_sucesso = self.pegar_e_validar_dados_tela()
@@ -142,7 +187,7 @@ class Configuracao(Screen):
 
         print("Config", self._config)
 
-        self.escrever_config()
+        self.escrever_config_CLP()
         self.mudar_para_tela_principal()
 
     def pegar_e_validar_dados_tela(self):
@@ -162,24 +207,68 @@ class Configuracao(Screen):
                 self.ids.velocidade_inversor.text)
 
             if self._config['velocidade_inversor'] < 0 or self._config['velocidade_inversor'] > 60:
-                # aparecer label de erro com escrito "Velocidade inversor deve ser um numero real entre 0 e 60"
+                # TODO: aparecer label de erro com escrito "Velocidade inversor deve ser um numero real entre 0 e 60"
                 return False
 
             return True
         except Exception as e:
-            # aparecer label de erro com escrito e.args
+            # TODO: aparecer label de erro com escrito e.args
             return False
 
-    def escrever_config(self):
-        print("to escrevendo")
+    def escrever_config_CLP(self):
+        print("to escrevendo config no CLP")
+        self.desligar_motores()
+        sleep(1)
 
-    def escreveFloat(self, addr, valor):
-        valor_tratado = encode_ieee(valor)
+        self.escrever_config_partidas()
+        self.escrever_tipo_compressores()
 
-        return self._cliente.write_multiple_registers(addr, long_list_to_word([valor_tratado]))
+    def escrever_config_partidas(self):
+        print("to escrevendo config das partidas")
+
+        if self._config['partida_inversor_setada']:
+            self.escrever_inteiro(1324, 2)
+            self.escreverFloat(1314, self._config['tempo_aceleracao'])
+            self.escreverFloat(1315, self._config['tempo_desaceleracao'])
+            self.escreverFloat(1313, self._config['velocidade_inversor'])
+        elif self._config['partida_soft_setada']:
+            self.escrever_inteiro(1324, 1)
+            self.escreverFloat(1317, self._config['tempo_aceleracao'])
+            self.escreverFloat(1318, self._config['tempo_desaceleracao'])
+        else:
+            # A partida default vai ser a direta
+            self.escrever_inteiro(1324, 3)
+
+    def escrever_tipo_compressores(self):
+        print("to escrevendo tipo dos compressores")
+        valor16bits = modbus_client.read_holding_register(1328, 1)[0]
+        lista_de_bits = [int(i) for i in list('{0:016b}'.format(valor16bits))]
+
+        if self._config['compressor_scroll_setado']:
+            lista_de_bits[1] = 0
+        else:
+            lista_de_bits[1] = 1  # default é o hermetico
+
+        valor_a_ser_inserido = int("".join(str(i) for i in lista_de_bits), 2)
+        modbus_client.write_single_register(1328, valor_a_ser_inserido)
+
+    def desligar_motores(self):
+        print("Desligando motores")
+        self.escrever_inteiro(1312, 0)  # direta
+        self.escrever_inteiro(1319, 0)  # inversor
+        self.escrever_inteiro(1316, 0)  # soft
 
     def mudar_tela_principal(self):
         print("to mudando_tela_principal")
+        # TODO: mudar de tela
+
+    def escreverFloat(self, addr, valor):
+        valor_tratado = encode_ieee(valor)
+
+        return modbus_client.write_multiple_registers(addr, long_list_to_word([valor_tratado]))
+
+    def escrever_inteiro(self, addr, valor):
+        modbus_client.write_single_register(addr, valor)
 
 
 class Graficos(Screen):
@@ -204,8 +293,6 @@ kv = Builder.load_file('supervisorio.kv')
 class Supervisorio(App):
     def build(self):
         return kv
-
-        # return SupervisorioHandler(server_ip, modbus_port)
 
 
 if __name__ == '__main__':
