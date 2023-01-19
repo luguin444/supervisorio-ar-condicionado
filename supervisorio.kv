@@ -1,7 +1,9 @@
 #:kivy 1.11.1
 WindowManager:
     Principal:
+        id: principal
     Configuracao:
+        id: config
     Graficos:
     Dados:
     GraficosTR:
@@ -35,7 +37,9 @@ WindowManager:
             ActionButton:
                 id: config
                 text: 'Configuração'
-                on_release: app.root.current = 'config'
+                on_release: 
+                    app.root.current = 'config'
+                    root.parent.ids.config.pegarClienteModBus()
             
             ActionButton:
                 id: graf
@@ -52,19 +56,6 @@ WindowManager:
                 text: 'Tempo Real'
                 on_release: app.root.current = 'graficotr'
     FloatLayout:
-        canvas:
-            Color:
-                id: scroll
-                rgba: 0.5,0.5,0.5,1
-            Rectangle:
-                size: 30,30
-                pos: 117, 130
-            Color:
-                id: hermetico
-                rgba: 0.5,0.5,0.5,1
-            Rectangle:
-                size: 30,30
-                pos: 40, 130
         Image:
             source: 'imgs/interface.png'
             pos_hint: {'x': -0.13, 'y': 0}
@@ -79,7 +70,14 @@ WindowManager:
             size_hint: 0.03, 0.03
             background_color: 0.5,0.5,0.5,1
             pos: 70, 430
-            on_release: root.ligamotor()
+            on_release: root.comutarMotor()
+        
+        Button:
+            text: ''
+            size_hint: 0.03, 0.03
+            background_color: 0.5,0.5,0.5,1
+            pos: 70, 100
+            on_release: root.comutarCompressor()
 
         BoxLayout:
             orientation: 'vertical'
@@ -87,17 +85,52 @@ WindowManager:
                 Color:
                     rgba: 0,0,0,0.3
                 Rectangle:
-                    size: 295,540
+                    size: 295,265
                     pos: 900,5
-            Label:
-                id: graf1
-                pos_hint: {'x': 0.38}
-                text: 'GraficoTR1'
+                Rectangle:
+                    size: 295,265
+                    pos: 900,280
+        Label:
+            id: vel_ar
+            text: '-.- m/s'
+            pos_hint: {'x': 0.12, 'y': 0.35}
+            color: 0,0,0,0.7
 
-            Label:
-                id: graf2
-                pos_hint: {'x': 0.38}
-                text: 'GraficoTR2'
+        Label:
+            id: temp_ar
+            text: '-.- °C'
+            pos_hint: {'x': 0.18, 'y': 0.35}
+            color: 0,0,0,0.7
+
+        Label:
+            id: temp_tub_azul
+            text: '-.- °C'
+            pos_hint: {'x': -0.22, 'y': 0.08}
+            color: 0,0,0,0.7
+
+        Label:
+            id: temp_tub_vermelho
+            text: '-.- °C'
+            pos_hint: {'x': -0.28, 'y': -0.19}
+            color: 0,0,0,0.7
+
+        Label:
+            id: freq_compressor
+            text: '-.- Hz'
+            pos_hint: {'x': -0.43, 'y': -0.2}
+            color: 0,0,0,0.7
+
+        Label:
+            id: torque_motor
+            text: '-.- N.m'
+            pos_hint: {'x': -0.37, 'y': 0.18}
+            color: 0,0,0,0.7
+
+        Label:
+            id: freq_motor_rpm
+            text: '-.- RPM'
+            pos_hint: {'x': -0.37, 'y': 0.15}
+            color: 0,0,0,0.7
 
 <Configuracao>:
     name: 'config'
@@ -118,6 +151,7 @@ WindowManager:
                 title: "Configurações"
                 with_previous: False
                 app_icon: ''
+                on_release: root.pegarClienteModBus()
             
             ActionButton:
                 id: principal
@@ -161,38 +195,66 @@ WindowManager:
             Rectangle:
                 size: 300, 250
                 pos: 750,295
+
         BoxLayout:
             orientation:'vertical'
-            Label:
-                size_hint: 1,0.5
-            Label:
-                text: 'Configuração dos Motores'
 
             BoxLayout:
                 orientation: 'horizontal'
                 Label:
                     size_hint: 1,1
-                CheckBox:
-                    size: 5,5
-                    id: radial
-                    group: 'motor'
                 Label:
-                    text: 'Radial'
+                    text: ''
                 Label:
                     size_hint: 1,1
+
             Label:
-                size_hint: 1,0.3
+                size_hint:1,0.5
+            Label:
+                text: 'Painel de Configurações'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                Label:
+                    text: '    Para configurar selecione o tipo de partida'
+                Label:
+                    size_hint: 1,1
             
             BoxLayout:
                 orientation: 'horizontal'
                 Label:
                     size_hint: 1,1
-                CheckBox:
-                    size: 5,5
-                    id: axial
-                    group: 'motor'
                 Label:
-                    text: 'Axial'
+                    text: 'o tipo de compressor e dependendo da'
+                Label:
+                    size_hint: 1,1
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                Label:
+                    text: 'escolha de partida identifique tambem'
+                Label:
+                    size_hint: 1,1
+
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                Label:
+                    text: 'os valores de velocidades e frequencia'
+                Label:
+                    size_hint: 1,1
+
+            BoxLayout:
+                orientation: 'horizontal'
+                Label:
+                    size_hint: 1,1
+                Label:
+                    text: ''
                 Label:
                     size_hint: 1,1
 
@@ -369,6 +431,206 @@ WindowManager:
                 id: graftr
                 text: 'Tempo Real'
                 on_release: app.root.current = 'graficotr'
+
+    FloatLayout:
+        canvas:
+            Color:
+                rgba: 0,0,0,0.5
+            Rectangle:
+                size: 540, 540
+                pos: 5,5
+        
+        Label:
+            pos_hint: {'x': -0.26,'y':0.38}
+            text: 'Plotar Graficos com Filtro de Tempo:'
+        Label:
+            pos_hint: {'x': -0.4,'y':0.34}
+            text: 'Selecione a Variavel de Interesse:'
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.76}
+            CheckBox:
+                id: temp_enrolamento_r
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Enrolamento R'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.7}
+            CheckBox:
+                id: temp_enrolamento_s
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Enrolamento S'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.64}
+            CheckBox:
+                id: temp_enrolamento_t
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Enrolamento T'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.58}
+            CheckBox:
+                id: temp_carcaca
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Carcaça'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.52}
+            CheckBox:
+                id: freq_motor_rpm
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Frequencia do Motor'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.46}
+            CheckBox:
+                id: torque_ventilador_radial
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Torque Ventilador Radial'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.4}
+            CheckBox:
+                id: torque_ventilador_axial
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Torque Ventilador Axial'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.34}
+            CheckBox:
+                id: vazao_ar
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Vazão do Ar'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.28}
+            CheckBox:
+                id: velocidade_ar
+                group: 'filtro'
+                size_hint: 0.5,0.4
+                pos_hint: {'x': 0,'y':0}
+            Label:
+                text: 'Velocidade do Ar'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.22}
+            CheckBox:
+                id: temperatura_ar
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Ar'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.16}
+            CheckBox:
+                id: temperatura_tubo_azul
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Tubo Azul'
+                size_hint: 1,0.4
+
+        BoxLayout:
+            size_hint: 0.2, 0.2
+            orientation: 'horizontal'
+            pos_hint: {'x': 0,'y':0.1}
+            CheckBox:
+                id: temp_enroltemperatura_tubo_vermelhoamento_r
+                group: 'filtro'
+                size_hint: 0.5,0.4
+            Label:
+                text: 'Temperatura Tubo Vermelho'
+                size_hint: 1,0.4
+
+    BoxLayout:
+        orientation: 'horizontal'
+        pos_hint: {'x': 0,'y':0.03}
+        size_hint_x: None
+        width: 400
+        size_hint_y: None
+        heigth: 30
+        Label:
+            text: 'Inicio:'
+            size_hint: 0.6,0.4
+        TextInput:
+            id: temp_inicial
+            size_hint: 1,0.3
+        Label:
+            text: 'Final:'
+            size_hint: 0.6,0.4
+        TextInput:
+            id: temp_final
+            size_hint: 1,0.3
+
+    Button:
+        size_hint: 0.1,0.05
+        pos_hint: {'x': 0.34,'y':0.03}
+        text: 'Plotar Grafico'
+        # on_press: root.plotagraficoestatico()
+
+    BoxLayout:
+        id: graficoestatico
+        orientation: 'horizontal'
+        canvas:
+            Color:
+                rgba: 0,0,0,0.5
+            Rectangle:
+                size: 645, 540
+                pos: 550,5
+        
+        # GRAFICO
+
+
+
 
 <Dados>:
     name: 'dados'
